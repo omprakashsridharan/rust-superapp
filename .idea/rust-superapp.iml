@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/common/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/books_api/migration/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/database/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testcontainers_images/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
