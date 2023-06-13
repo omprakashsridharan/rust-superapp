@@ -11,3 +11,7 @@ database = { path = "../database" }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+serde = { worksapce = true }
+sea-orm = { workspace = true }
+derive_builder = { workspace = true }
+thiserror = { workspace = true }
