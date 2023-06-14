@@ -1,5 +1,5 @@
 [workspace]
-members = ["common", "books_api", "books_analytics", "database"]
+members = ["common", "books_api", "books_analytics", "database", "kafka"]
 
 [workspace.dependencies]
 tokio = { version = "1.28.2", features = ["full"] }
