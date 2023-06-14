@@ -1,5 +1,7 @@
 mod entity;
 mod repository;
+mod service;
+mod dto;
 
 use database::get_connection;
 use crate::repository::{Repository};
