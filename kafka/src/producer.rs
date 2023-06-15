@@ -22,7 +22,7 @@ impl KafkaProducer {
         let serialized_data = serde_json::to_vec(&payload).expect("Failed to serialize payload");
 
         let record = FutureRecord::to(topic).payload(&serialized_data).key(&key);
-        let delivery_status = self.producer.send(record, Duration::from_secs(0)).await;
+        let delivery_status = self.producer.send(record, Duration::from_secs(10)).await;
         if delivery_status.is_err() {
             println!("{}", delivery_status.err().unwrap().0.to_string());
             return false;
@@ -47,7 +47,7 @@ mod tests {
     use super::KafkaProducer;
 
     #[tokio::test]
-    async fn test_produce() {
+    async fn test_kafka_producers() {
         let docker = clients::Cli::default();
         let kafka_node = docker.run(kafka::Kafka::default());
 
@@ -55,18 +55,22 @@ mod tests {
             "127.0.0.1:{}",
             kafka_node.get_host_port_ipv4(kafka::KAFKA_PORT)
         );
+        test_produce(bootstrap_servers.clone()).await;
+        test_custom_struct_produce(bootstrap_servers.clone()).await;
+    }
 
+    async fn test_produce(bootstrap_servers: String) {
         let kafka_producer = KafkaProducer::new(bootstrap_servers.clone());
 
         let consumer = ClientConfig::new()
-            .set("group.id", "testcontainer-rs")
+            .set("group.id", "string-consumer")
             .set("bootstrap.servers", &bootstrap_servers)
             .set("session.timeout.ms", "6000")
             .set("enable.auto.commit", "false")
             .set("auto.offset.reset", "earliest")
             .create::<StreamConsumer>()
             .expect("Failed to create Kafka StreamConsumer");
-        let topic = "test-topic";
+        let topic = "string-topic";
         let key = "test-key";
         let payload = "test-payload";
         let produce_result = kafka_producer
@@ -83,14 +87,11 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        assert_eq!(
-            payload.to_string(),
-            borrowed_message
-                .unwrap()
-                .payload_view::<str>()
-                .unwrap()
-                .unwrap()
-        );
+        let borrowed_message = borrowed_message.unwrap();
+        let consumed_bytes = borrowed_message.payload_view::<[u8]>().unwrap().unwrap();
+        let consumed_custom: String = serde_json::from_slice(consumed_bytes).unwrap();
+
+        assert_eq!(payload.to_string(), consumed_custom);
     }
 
     #[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -98,27 +99,18 @@ mod tests {
         value: String,
     }
 
-    #[tokio::test]
-    async fn test_custom_struct_produce() {
-        let docker = clients::Cli::default();
-        let kafka_node = docker.run(kafka::Kafka::default());
-
-        let bootstrap_servers = format!(
-            "127.0.0.1:{}",
-            kafka_node.get_host_port_ipv4(kafka::KAFKA_PORT)
-        );
-
+    async fn test_custom_struct_produce(bootstrap_servers: String) {
         let kafka_producer = KafkaProducer::new(bootstrap_servers.clone());
 
         let consumer = ClientConfig::new()
-            .set("group.id", "testcontainer-rs")
+            .set("group.id", "custom-struct-consumer")
             .set("bootstrap.servers", &bootstrap_servers)
             .set("session.timeout.ms", "6000")
             .set("enable.auto.commit", "false")
             .set("auto.offset.reset", "earliest")
             .create::<StreamConsumer>()
             .expect("Failed to create Kafka StreamConsumer");
-        let topic = "test-topic";
+        let topic = "custom-struct-topic";
         let key = "test-key";
         let payload = Custom {
             value: "test-payload".to_string(),
@@ -137,8 +129,8 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
-        let y = borrowed_message.unwrap();
-        let consumed_bytes = y.payload_view::<[u8]>().unwrap().unwrap();
+        let borrowed_message = borrowed_message.unwrap();
+        let consumed_bytes = borrowed_message.payload_view::<[u8]>().unwrap().unwrap();
         let consumed_custom: Custom = serde_json::from_slice(consumed_bytes).unwrap();
         assert_eq!(
             Custom {
