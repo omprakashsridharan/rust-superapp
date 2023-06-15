@@ -879,6 +879,7 @@ dependencies = [
  "futures",
  "rdkafka",
  "serde",
+ "serde_json",
  "testcontainers",
  "tokio",
 ]
