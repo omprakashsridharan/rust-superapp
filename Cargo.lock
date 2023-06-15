@@ -876,8 +876,11 @@ dependencies = [
 name = "kafka"
 version = "0.0.0"
 dependencies = [
+ "futures",
  "rdkafka",
  "serde",
+ "testcontainers",
+ "tokio",
 ]
 
 [[package]]

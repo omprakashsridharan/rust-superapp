@@ -1,10 +1,9 @@
-use std::sync::Arc;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr};
-use sea_orm::ActiveValue::Set;
-use thiserror::Error;
+use crate::entity::book::{ActiveModel as BookActiveModel, Model as BookModel};
 use migration::{Migrator, MigratorTrait};
-use crate::entity::book::{Model as BookModel, ActiveModel as BookActiveModel};
-
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr};
+use std::sync::Arc;
+use thiserror::Error;
 
 pub struct Repository {
     database_connection: Arc<DatabaseConnection>,
@@ -13,35 +12,41 @@ pub struct Repository {
 #[derive(Error, Debug)]
 pub enum RepositoryError {
     #[error("Database error")]
-    DatabaseError(#[from] DbErr)
+    DatabaseError(#[from] DbErr),
 }
 
 impl Repository {
     pub async fn new(database_connection: DatabaseConnection) -> Result<Self, RepositoryError> {
-        Migrator::up(&database_connection, None).await.map_err(|e| RepositoryError::DatabaseError(e))?;
+        Migrator::up(&database_connection, None)
+            .await
+            .map_err(|e| RepositoryError::DatabaseError(e))?;
         Ok(Self {
-            database_connection: Arc::new(database_connection)
+            database_connection: Arc::new(database_connection),
         })
     }
 
-    pub async fn create_book(&self, title: String, isbn: String) -> Result<BookModel, RepositoryError> {
+    pub async fn create_book(
+        &self,
+        title: String,
+        isbn: String,
+    ) -> Result<BookModel, RepositoryError> {
         let created_book = BookActiveModel {
             title: Set(title),
             isbn: Set(isbn),
             ..Default::default()
         };
-        created_book.insert(self.database_connection.as_ref()).await.map_err(|e| RepositoryError::DatabaseError(e))
+        created_book
+            .insert(self.database_connection.as_ref())
+            .await
+            .map_err(|e| RepositoryError::DatabaseError(e))
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use sea_orm::{DbErr, RuntimeErr};
-    use sea_orm::sea_query::error::Error;
-    use testcontainers::{clients, images};
+    use crate::repository::Repository;
     use database::get_connection;
-    use crate::repository::{Repository, RepositoryError};
+    use testcontainers::{clients, images};
 
     #[tokio::test]
     async fn test_create_book() {
@@ -56,7 +61,10 @@ mod tests {
         let repository = Repository::new(database_connection.clone()).await.unwrap();
         let title = "TITLE".to_string();
         let isbn = "ISBN".to_string();
-        let created_book = repository.create_book(title.clone(), isbn.clone()).await.unwrap();
+        let created_book = repository
+            .create_book(title.clone(), isbn.clone())
+            .await
+            .unwrap();
         assert_eq!(created_book.title, title.clone());
         assert_eq!(created_book.isbn, isbn.clone());
     }
@@ -74,7 +82,10 @@ mod tests {
         let repository = Repository::new(database_connection.clone()).await.unwrap();
         let title = "TITLE".to_string();
         let isbn = "ISBN".to_string();
-        let created_book1 = repository.create_book(title.clone(), isbn.clone()).await.unwrap();
+        let created_book1 = repository
+            .create_book(title.clone(), isbn.clone())
+            .await
+            .unwrap();
         assert_eq!(created_book1.title, title.clone());
         assert_eq!(created_book1.isbn, isbn.clone());
 
