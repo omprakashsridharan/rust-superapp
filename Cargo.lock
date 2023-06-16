@@ -882,6 +882,7 @@ dependencies = [
  "serde_json",
  "testcontainers",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
