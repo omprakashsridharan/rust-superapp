@@ -1,12 +1,12 @@
-use std::fmt::Debug;
-
 use rdkafka::{
     config::RDKafkaLogLevel,
     consumer::{CommitMode, Consumer, StreamConsumer},
     ClientConfig, Message,
 };
 use serde::Deserialize;
-use tracing::{info, warn};
+use std::fmt::Debug;
+use tokio::sync::mpsc::UnboundedSender;
+use tracing::{error, info, warn};
 
 pub struct KafkaConsumer {
     consumer: StreamConsumer,
@@ -26,7 +26,11 @@ impl KafkaConsumer {
         Self { consumer }
     }
 
-    pub async fn consume<T: Debug + for<'a> Deserialize<'a>>(&self, topics: &[&str]) {
+    pub async fn consume<T: Debug + for<'a> Deserialize<'a>>(
+        &self,
+        topics: &[&str],
+        sender: UnboundedSender<T>,
+    ) {
         self.consumer
             .subscribe(&topics.to_vec())
             .expect("Can't subscribe to specific topics");
@@ -38,6 +42,10 @@ impl KafkaConsumer {
                             let deserialised_payload: T = serde_json::from_slice(bytes).unwrap();
                             info!("key: '{:?}', payload: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
                       message.key(), deserialised_payload, message.topic(), message.partition(), message.offset(), message.timestamp());
+                            match sender.send(deserialised_payload) {
+                                Ok(()) => todo!(),
+                                Err(e) => error!("error while sending via channel {}", e),
+                            }
                         }
                         Some(Err(e)) => {
                             warn!("Error while deserializing message payload: {:?}", e);
