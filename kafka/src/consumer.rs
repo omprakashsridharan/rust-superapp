@@ -17,9 +17,10 @@ impl KafkaConsumer {
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", group_id)
             .set("bootstrap.servers", bootstrap_servers)
+            .set("session.timeout.ms", "6000")
             .set("message.timeout.ms", "5000")
-            .set("enable.auto.commit", "true")
-            .set("enable.partition.eof", "false")
+            .set("enable.auto.commit", "false")
+            .set("auto.offset.reset", "earliest")
             .set_log_level(RDKafkaLogLevel::Debug)
             .create()
             .expect("Consumer creation error");
@@ -28,36 +29,45 @@ impl KafkaConsumer {
 
     pub async fn consume<T: Debug + for<'a> Deserialize<'a>>(
         &self,
-        topics: &[&str],
+        topic: &str,
         sender: UnboundedSender<T>,
     ) {
         self.consumer
-            .subscribe(&topics.to_vec())
+            .subscribe(&[topic])
             .expect("Can't subscribe to specific topics");
-        loop {
-            match self.consumer.recv().await {
-                Ok(message) => {
-                    match message.payload_view::<[u8]>() {
-                        Some(Ok(bytes)) => {
-                            let deserialised_payload: T = serde_json::from_slice(bytes).unwrap();
-                            info!("key: '{:?}', payload: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
-                      message.key(), deserialised_payload, message.topic(), message.partition(), message.offset(), message.timestamp());
-                            match sender.send(deserialised_payload) {
-                                Ok(()) => todo!(),
-                                Err(e) => error!("error while sending via channel {}", e),
-                            }
+
+        while let Ok(message) = self.consumer.recv().await {
+            match message.payload_view::<[u8]>() {
+                Some(Ok(bytes)) => {
+                    if let Ok(deserialized_payload) = serde_json::from_slice(bytes) {
+                        info!(
+                                    "key: '{:?}', payload: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
+                                    message.key(),
+                                    deserialized_payload,
+                                    message.topic(),
+                                    message.partition(),
+                                    message.offset(),
+                                    message.timestamp()
+                                );
+                        if let Err(e) = sender.send(deserialized_payload) {
+                            error!("Error while sending via channel: {}", e);
+                        } else {
+                            info!("Message consumed successfully");
                         }
-                        Some(Err(e)) => {
-                            warn!("Error while deserializing message payload: {:?}", e);
-                        }
-                        None => {}
-                    };
-                    self.consumer
-                        .commit_message(&message, CommitMode::Async)
-                        .unwrap();
+                    } else {
+                        warn!("Error while deserializing message payload");
+                    }
                 }
-                Err(error) => warn!("Kafka error: {}", error),
+                Some(Err(e)) => {
+                    warn!("Error while deserializing message payload: {:?}", e);
+                }
+                None => {
+                    info!("No payload");
+                }
             }
+            self.consumer
+                .commit_message(&message, CommitMode::Async)
+                .unwrap();
         }
     }
 }
