@@ -10,8 +10,8 @@ pub async fn start_http_server(service: Service) {
     let books_router = Router::new().route("/", post(create_book));
     let api_router = Router::new().nest("/books", books_router);
     let app = Router::new()
-        .layer(opentelemetry_tracing_layer())
         .nest("/api", api_router)
+        .layer(opentelemetry_tracing_layer())
         .layer(Extension(service));
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     axum::Server::bind(&addr)

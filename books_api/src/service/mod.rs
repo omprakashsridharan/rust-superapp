@@ -2,6 +2,7 @@ pub mod book_created_producer;
 use crate::dto::{Book, BookBuilder, BookBuilderError};
 use crate::repository::{Repository, RepositoryError};
 use thiserror::Error;
+use tracing::{info_span, Instrument};
 
 use self::book_created_producer::{BookCreatedProducer, BookCreatedProducerError};
 
@@ -40,18 +41,28 @@ impl Service {
         title: String,
         isbn: String,
     ) -> Result<Book, ServiceError> {
-        let created_book_model = self
-            .repository
-            .create_book(title, isbn)
-            .await
-            .map_err(|e| ServiceError::RepositoryError(e))?;
-        self.book_created_producer
-            .publish_created_book(
-                created_book_model.id.clone(),
-                created_book_model.title.clone(),
-                created_book_model.isbn.clone(),
-            )
-            .await?;
+        let span = info_span!("create_and_publish_book repository create_book");
+        let created_book_model = async move {
+            let created_book_model = self
+                .repository
+                .create_book(title, isbn)
+                .await
+                .map_err(|e| ServiceError::RepositoryError(e));
+            return created_book_model;
+        }
+        .instrument(span)
+        .await?;
+        tokio::spawn(
+            self.book_created_producer
+                .publish_created_book(
+                    created_book_model.id,
+                    created_book_model.title.clone(),
+                    created_book_model.isbn.clone(),
+                )
+                .instrument(info_span!("publish_created_book")),
+        )
+        .await;
+
         let book = BookBuilder::default()
             .id(created_book_model.id)
             .title(created_book_model.title)

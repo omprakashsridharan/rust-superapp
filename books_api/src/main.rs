@@ -15,7 +15,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     opentelemetry::global::set_text_map_propagator(opentelemetry_zipkin::Propagator::new());
     let tracer = opentelemetry_zipkin::new_pipeline()
-        .with_service_name("service".to_owned())
+        .with_service_name("books_api".to_owned())
         .with_service_address("127.0.0.1:8080".parse().unwrap())
         .with_collector_endpoint("http://localhost:9411/api/v2/spans")
         .install_batch(opentelemetry::runtime::Tokio)
