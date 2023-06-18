@@ -1,4 +1,7 @@
-use common::events::dto::{CreatedBookBuilder, CreatedBookBuilderError};
+use common::events::{
+    constants::Topics,
+    dto::{CreatedBookBuilder, CreatedBookBuilderError},
+};
 use kafka::producer::KafkaProducer;
 use thiserror::Error;
 
@@ -15,7 +18,7 @@ pub enum BookCreatedProducerError {
 impl BookCreatedProducer {
     pub fn new(bootstrap_servers: String) -> Self {
         Self {
-            producer: KafkaProducer::new(bootstrap_servers),
+            producer: KafkaProducer::new(bootstrap_servers, Topics::BookCreated.to_string()),
         }
     }
 
@@ -31,9 +34,6 @@ impl BookCreatedProducer {
             .isbn(isbn)
             .build()
             .map_err(|e| BookCreatedProducerError::CreatedBookBuilderError(e))?;
-        Ok(self
-            .producer
-            .produce("book.created", id.to_string(), created_book)
-            .await)
+        Ok(self.producer.produce(id.to_string(), created_book).await)
     }
 }

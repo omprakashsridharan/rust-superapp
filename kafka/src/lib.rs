@@ -20,19 +20,21 @@ mod tests {
         mock_cluster
             .create_topic(topic.clone(), 1, 1)
             .expect("Failed to create topic");
-        let kafka_producer = KafkaProducer::new(mock_cluster.bootstrap_servers());
+        let kafka_producer =
+            KafkaProducer::new(mock_cluster.bootstrap_servers(), topic.to_string());
         let kakfa_consumer = KafkaConsumer::new(
             mock_cluster.bootstrap_servers(),
             "string-consumer".to_string(),
+            topic.to_string(),
         );
 
         let (sender, mut receiver) = mpsc::unbounded_channel::<String>();
         let produce_result = kafka_producer
-            .produce(topic, key.to_string(), payload.to_string())
+            .produce(key.to_string(), payload.to_string())
             .await;
         assert!(produce_result);
         let handle = tokio::spawn(async move {
-            kakfa_consumer.consume(topic, sender.clone()).await;
+            kakfa_consumer.consume(sender.clone()).await;
         });
 
         while let Some(message) = receiver.recv().await {
@@ -58,19 +60,21 @@ mod tests {
         mock_cluster
             .create_topic(topic.clone(), 1, 1)
             .expect("Failed to create topic");
-        let kafka_producer = KafkaProducer::new(mock_cluster.bootstrap_servers());
+        let kafka_producer =
+            KafkaProducer::new(mock_cluster.bootstrap_servers(), topic.to_string());
         let kakfa_consumer = KafkaConsumer::new(
             mock_cluster.bootstrap_servers(),
             "custom-consumer".to_string(),
+            topic.to_string(),
         );
 
         let produce_result = kafka_producer
-            .produce(topic, key.to_string(), payload.clone())
+            .produce(key.to_string(), payload.clone())
             .await;
         assert!(produce_result);
         let (sender, mut receiver) = mpsc::unbounded_channel::<Custom>();
         let handle = tokio::spawn(async move {
-            kakfa_consumer.consume(topic, sender.clone()).await;
+            kakfa_consumer.consume(sender.clone()).await;
         });
 
         while let Some(message) = receiver.recv().await {

@@ -2,6 +2,7 @@ version: '3.1'
 
 services:
   db:
+    container_name: rust-superapp-db
     image: postgres
     environment:
       POSTGRES_USER: postgres
@@ -13,9 +14,9 @@ services:
       - postgres_dev:/var/lib/postgresql/data
 
   broker:
+    container_name: rust-superapp-broker
     image: confluentinc/cp-kafka:7.4.0
     hostname: broker
-    container_name: broker
     depends_on:
       - controller
     ports:
@@ -42,9 +43,9 @@ services:
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
 
   controller:
+    container_name: rust-superapp-controller
     image: confluentinc/cp-kafka:7.4.0
     hostname: controller
-    container_name: controller
     ports:
       - "9093:9093"
       - "9102:9102"
@@ -66,9 +67,9 @@ services:
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
 
   schema-registry:
+    container_name: rust-superapp-schema-registry
     image: confluentinc/cp-schema-registry:7.4.0
     hostname: schema-registry
-    container_name: schema-registry
     depends_on:
       - broker
       - controller
@@ -135,7 +136,7 @@ services:
   #      PORT: 9021
 
   kafka-ui:
-    container_name: kafka-ui
+    container_name: rust-superapp-kafka-ui
     image: provectuslabs/kafka-ui:latest
     ports:
       - "9090:8080"
@@ -262,6 +263,7 @@ services:
   #      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
   zipkin-server:
+    container_name: rust-superapp-zipkin-server
     image: openzipkin/zipkin
     ports:
       - "9411:9411"

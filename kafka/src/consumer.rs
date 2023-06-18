@@ -10,10 +10,11 @@ use tracing::{error, info, warn};
 
 pub struct KafkaConsumer {
     consumer: StreamConsumer,
+    topic: String,
 }
 
 impl KafkaConsumer {
-    pub fn new(bootstrap_servers: String, group_id: String) -> Self {
+    pub fn new(bootstrap_servers: String, group_id: String, topic: String) -> Self {
         let consumer: StreamConsumer = ClientConfig::new()
             .set("group.id", group_id)
             .set("bootstrap.servers", bootstrap_servers)
@@ -24,16 +25,12 @@ impl KafkaConsumer {
             .set_log_level(RDKafkaLogLevel::Debug)
             .create()
             .expect("Consumer creation error");
-        Self { consumer }
+        Self { consumer, topic }
     }
 
-    pub async fn consume<T: Debug + for<'a> Deserialize<'a>>(
-        &self,
-        topic: &str,
-        sender: UnboundedSender<T>,
-    ) {
+    pub async fn consume<T: Debug + for<'a> Deserialize<'a>>(&self, sender: UnboundedSender<T>) {
         self.consumer
-            .subscribe(&[topic])
+            .subscribe(&[&self.topic])
             .expect("Can't subscribe to specific topics");
 
         while let Ok(message) = self.consumer.recv().await {
