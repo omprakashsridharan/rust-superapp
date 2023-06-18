@@ -268,12 +268,12 @@ dependencies = [
  "axum",
  "axum-tracing-opentelemetry",
  "common",
- "common_tracing",
  "database",
  "derive_builder",
  "kafka",
  "migration",
  "opentelemetry",
+ "opentelemetry-zipkin",
  "sea-orm",
  "serde",
  "serde_json",
@@ -281,6 +281,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+ "tracing-opentelemetry",
  "tracing-subscriber",
 ]
 
@@ -440,17 +441,6 @@ dependencies = [
  "derive_builder",
  "serde",
  "strum",
-]
-
-[[package]]
-name = "common_tracing"
-version = "0.0.0"
-dependencies = [
- "opentelemetry",
- "opentelemetry-zipkin",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
 ]
 
 [[package]]

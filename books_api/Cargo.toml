@@ -21,5 +21,6 @@ common = {path = "../common"}
 axum = {workspace = true}
 serde_json = {workspace = true}
 opentelemetry = {workspace = true}
-common_tracing = {path = "../common_tracing"}
 axum-tracing-opentelemetry = {workspace = true}
+opentelemetry-zipkin = {workspace = true}
+tracing-opentelemetry = {workspace = true}
