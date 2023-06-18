@@ -1,10 +1,14 @@
 [workspace]
-members = ["common", "books_api", "books_analytics", "database", "kafka"]
+members = ["common", "books_api", "books_analytics", "database", "kafka", "common_tracing"]
 
 [workspace.dependencies]
 tokio = { version = "1.28.2", features = ["full"] }
 tracing = "0.1.37"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = [
+  "json",
+  "time",
+  "env-filter",
+]}
 serde = { version = "1.0.164", features = ["derive"]}
 serde_json = "1.0"
 sea-orm = { version = "0.11.3", features = ["macros", "runtime-tokio-rustls", "sqlx-postgres"] }
@@ -13,3 +17,9 @@ thiserror = "1.0.40"
 testcontainers = "0.14.0"
 strum = { version = "0.24", features = ["derive"] }
 axum = "0.6.18"
+opentelemetry = { version = "0.19.0", features = ["rt-tokio", "metrics"] }
+tracing-opentelemetry = "0.19.0"
+opentelemetry-zipkin = { version = "0.17.0", features = [
+  "reqwest-client",
+], default-features = false }
+axum-tracing-opentelemetry = "0.11.0"
