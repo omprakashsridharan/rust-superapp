@@ -1,17 +1,17 @@
 pub mod book_created_producer;
+use self::book_created_producer::{BookCreatedProducer, BookCreatedProducerError};
 use crate::dto::{Book, BookBuilder, BookBuilderError};
 use crate::repository::{Repository, RepositoryError};
+use std::sync::Arc;
 use thiserror::Error;
 use tracing::{info_span, Instrument};
-
-use self::book_created_producer::{BookCreatedProducer, BookCreatedProducerError};
 
 trait Async: Send + Sync {}
 
 #[derive(Clone)]
 pub struct Service {
     repository: Repository,
-    book_created_producer: BookCreatedProducer,
+    book_created_producer: Arc<BookCreatedProducer>,
 }
 
 impl Async for Service {}
@@ -32,7 +32,7 @@ impl Service {
     pub fn new(repository: Repository, book_created_producer: BookCreatedProducer) -> Self {
         Self {
             repository,
-            book_created_producer,
+            book_created_producer: Arc::new(book_created_producer),
         }
     }
 
@@ -52,16 +52,16 @@ impl Service {
         }
         .instrument(span)
         .await?;
-        tokio::spawn(
-            self.book_created_producer
-                .publish_created_book(
-                    created_book_model.id,
-                    created_book_model.title.clone(),
-                    created_book_model.isbn.clone(),
-                )
-                .instrument(info_span!("publish_created_book")),
-        )
-        .await;
+        let producer = self.book_created_producer.clone();
+        let created_book_id = created_book_model.clone().id;
+        let created_book_title = created_book_model.clone().title;
+        let created_book_isbn = created_book_model.clone().isbn;
+        let _ = tokio::task::spawn(async move {
+            let _ = producer
+                .publish_created_book(created_book_id, created_book_title, created_book_isbn)
+                .await;
+        })
+        .instrument(info_span!("publish_created_book"));
 
         let book = BookBuilder::default()
             .id(created_book_model.id)

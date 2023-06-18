@@ -19,7 +19,6 @@ impl KafkaConsumer {
             .set("group.id", group_id)
             .set("bootstrap.servers", bootstrap_servers)
             .set("session.timeout.ms", "6000")
-            .set("message.timeout.ms", "5000")
             .set("enable.auto.commit", "false")
             .set("auto.offset.reset", "earliest")
             .set_log_level(RDKafkaLogLevel::Debug)
