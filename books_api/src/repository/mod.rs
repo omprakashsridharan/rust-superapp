@@ -5,6 +5,7 @@ use sea_orm::{ActiveModelTrait, DatabaseConnection, DbErr};
 use std::sync::Arc;
 use thiserror::Error;
 
+#[derive(Clone)]
 pub struct Repository {
     database_connection: Arc<DatabaseConnection>,
 }

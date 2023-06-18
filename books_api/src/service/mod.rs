@@ -5,10 +5,15 @@ use thiserror::Error;
 
 use self::book_created_producer::{BookCreatedProducer, BookCreatedProducerError};
 
+trait Async: Send + Sync {}
+
+#[derive(Clone)]
 pub struct Service {
     repository: Repository,
     book_created_producer: BookCreatedProducer,
 }
+
+impl Async for Service {}
 
 #[derive(Error, Debug)]
 pub enum ServiceError {

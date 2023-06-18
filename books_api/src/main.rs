@@ -1,12 +1,13 @@
 mod dto;
 mod entity;
+mod http_server;
 mod repository;
 mod service;
 
 use crate::repository::Repository;
 use database::get_connection;
+use http_server::start_http_server;
 use service::{book_created_producer::BookCreatedProducer, Service};
-use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -25,9 +26,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Error creating repository");
     let book_created_producer = BookCreatedProducer::new("localhost:9092".to_owned());
     let service = Service::new(repository, book_created_producer);
-    let created_book = service
-        .create_and_publish_book("Title2".to_string(), "ISBN".to_string())
-        .await?;
-    info!("Created book {:?}", created_book);
+    start_http_server(service).await;
     Ok(())
 }

@@ -5,6 +5,7 @@ use common::events::{
 use kafka::producer::KafkaProducer;
 use thiserror::Error;
 
+#[derive(Clone)]
 pub struct BookCreatedProducer {
     producer: KafkaProducer,
 }

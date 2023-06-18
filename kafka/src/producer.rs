@@ -5,6 +5,7 @@ use serde::Serialize;
 use std::time::Duration;
 use tracing::{error, info};
 
+#[derive(Clone)]
 pub struct KafkaProducer {
     producer: FutureProducer,
     topic: String,
