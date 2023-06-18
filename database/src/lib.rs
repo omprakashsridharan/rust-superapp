@@ -1,5 +1,5 @@
-use std::time::Duration;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection, DbErr};
+use std::time::Duration;
 use tracing::log;
 
 pub async fn get_connection(database_url: &str) -> Result<DatabaseConnection, DbErr> {

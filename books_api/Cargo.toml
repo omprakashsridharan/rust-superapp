@@ -16,3 +16,5 @@ sea-orm = { workspace = true }
 derive_builder = { workspace = true }
 thiserror = { workspace = true }
 testcontainers = { workspace = true }
+kafka = {path = "../kafka"}
+common = {path = "../common"}

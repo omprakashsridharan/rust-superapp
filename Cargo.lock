@@ -193,8 +193,10 @@ version = "0.0.0"
 name = "books_api"
 version = "0.0.0"
 dependencies = [
+ "common",
  "database",
  "derive_builder",
+ "kafka",
  "migration",
  "sea-orm",
  "serde",
@@ -357,6 +359,10 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.0.0"
+dependencies = [
+ "derive_builder",
+ "serde",
+]
 
 [[package]]
 name = "core-foundation-sys"
