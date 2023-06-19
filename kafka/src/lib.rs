@@ -1,18 +1,25 @@
 pub mod consumer;
 pub mod producer;
+pub mod schema_registry_image;
 pub mod shared;
+
 #[cfg(test)]
 mod tests {
 
     use apache_avro::AvroSchema;
     use rdkafka::mocking::MockCluster;
     use serde::{Deserialize, Serialize};
+    use testcontainers::clients;
     use tokio::sync::mpsc;
 
-    use crate::{consumer::KafkaConsumer, producer::KafkaProducer};
+    use crate::{
+        consumer::KafkaConsumer, producer::KafkaProducer, schema_registry_image::SchemaRegistry,
+    };
 
     #[tokio::test]
     async fn test_produce() {
+        let docker = clients::Cli::default();
+        let _schema_registry_node = docker.run(SchemaRegistry::default());
         let topic = "string-topic";
         let key = "test-key";
         let payload = "test-payload";
@@ -46,7 +53,7 @@ mod tests {
             assert_eq!(payload.to_string(), message);
             break;
         }
-        handle.abort()
+        handle.abort();
     }
 
     #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone, AvroSchema)]
