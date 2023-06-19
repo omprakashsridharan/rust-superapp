@@ -19,7 +19,6 @@ mod tests {
     #[tokio::test]
     async fn test_produce() {
         let docker = clients::Cli::default();
-        let _schema_registry_node = docker.run(SchemaRegistry::default());
         let topic = "string-topic";
         let key = "test-key";
         let payload = "test-payload";
@@ -28,6 +27,17 @@ mod tests {
         mock_cluster
             .create_topic(topic.clone(), 1, 1)
             .expect("Failed to create topic");
+
+        let _schema_registry_node = docker.run(SchemaRegistry::new(
+            [(
+                "SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS".to_owned(),
+                mock_cluster
+                    .bootstrap_servers()
+                    .replace("127.0.0.1", "host.docker.internal"),
+            )]
+            .into(),
+        ));
+
         let kafka_producer = KafkaProducer::new(
             mock_cluster.bootstrap_servers(),
             "http://localhost:8081".to_string(),

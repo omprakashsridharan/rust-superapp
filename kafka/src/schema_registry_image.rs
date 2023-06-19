@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use testcontainers::{Image, ImageArgs};
+use testcontainers::{core::WaitFor, Image, ImageArgs};
 
-const NAME: &str = "confluentinc/cp-kafka";
-const TAG: &str = "6.1.1";
+const NAME: &str = "confluentinc/cp-schema-registry";
+const TAG: &str = "7.4.0";
 pub const SCHEMA_REGISTRY_PORT: u16 = 8081;
 
 #[derive(Debug, Default, Clone)]
@@ -17,6 +17,24 @@ impl ImageArgs for SchemaRegistryArgs {
 
 pub struct SchemaRegistry {
     env_vars: HashMap<String, String>,
+}
+
+impl SchemaRegistry {
+    pub fn new(env_vars: HashMap<String, String>) -> Self {
+        let mut default_env_vars = HashMap::new();
+        default_env_vars.insert(
+            "SCHEMA_REGISTRY_LISTENERS".to_owned(),
+            "http://0.0.0.0:8081".to_owned(),
+        );
+        default_env_vars.insert(
+            "SCHEMA_REGISTRY_HOST_NAME".to_owned(),
+            "schema-registry".to_owned(),
+        );
+        default_env_vars.extend(env_vars.into_iter());
+        Self {
+            env_vars: default_env_vars,
+        }
+    }
 }
 
 impl Default for SchemaRegistry {
@@ -42,12 +60,14 @@ impl Image for SchemaRegistry {
     }
 
     fn ready_conditions(&self) -> Vec<testcontainers::core::WaitFor> {
-        vec![]
+        vec![WaitFor::message_on_stderr("Server started, listening for requests... (io.confluent.kafka.schemaregistry.rest.SchemaRegistryMain)")]
     }
 
     fn expose_ports(&self) -> Vec<u16> {
         vec![SCHEMA_REGISTRY_PORT]
     }
 
-
+    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
+        Box::new(self.env_vars.iter())
+    }
 }
