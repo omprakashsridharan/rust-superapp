@@ -5,8 +5,11 @@ mod repository;
 mod service;
 
 use crate::repository::Repository;
+use apache_avro::AvroSchema;
+use common::events::dto::CreatedBook;
 use database::get_connection;
 use http_server::start_http_server;
+use kafka::shared::register_schema;
 use opentelemetry::global;
 use service::{book_created_producer::BookCreatedProducer, Service};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -36,11 +39,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let repository = Repository::new(database_connection.clone())
         .await
         .expect("Error creating repository");
-    let book_created_producer = BookCreatedProducer::new(
-        "localhost:9092".to_owned(),
-        "http://localhost:8081".to_owned(),
-    );
+    let schema_registry_url = "http://localhost:8081".to_owned();
+    let book_created_producer =
+        BookCreatedProducer::new("localhost:9092".to_owned(), schema_registry_url.clone());
     let service = Service::new(repository, book_created_producer);
+
+    register_schema(
+        schema_registry_url,
+        "book".to_string(),
+        CreatedBook::get_schema(),
+    )
+    .await
+    .expect("Error while registering schema");
+
     start_http_server(service).await;
     global::shutdown_tracer_provider();
     Ok(())

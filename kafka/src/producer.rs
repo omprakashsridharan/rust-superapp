@@ -40,11 +40,6 @@ impl KafkaProducer {
     }
 
     pub async fn produce<T: Serialize + AvroSchema>(&self, key: String, payload: T) -> bool {
-        let key_strategy = SubjectNameStrategy::TopicNameStrategyWithSchema(
-            self.topic.clone(),
-            true,
-            get_supplied_schema(&String::get_schema()),
-        );
         let value_strategy = SubjectNameStrategy::TopicNameStrategyWithSchema(
             self.topic.clone(),
             true,
@@ -54,15 +49,6 @@ impl KafkaProducer {
             .avro_encoder
             .clone()
             .encode_struct(payload, &value_strategy)
-            .await
-        {
-            Ok(v) => v,
-            Err(e) => panic!("Error getting payload: {}", e),
-        };
-        let key = match self
-            .avro_encoder
-            .clone()
-            .encode_struct(key, &key_strategy)
             .await
         {
             Ok(v) => v,

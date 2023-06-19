@@ -314,6 +314,7 @@ dependencies = [
 name = "books_api"
 version = "0.0.0"
 dependencies = [
+ "apache-avro",
  "axum",
  "axum-tracing-opentelemetry",
  "common",
@@ -323,6 +324,7 @@ dependencies = [
  "migration",
  "opentelemetry",
  "opentelemetry-zipkin",
+ "schema_registry_converter",
  "sea-orm",
  "serde",
  "serde_json",
