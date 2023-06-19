@@ -26,6 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
     let kakfa_consumer = KafkaConsumer::new(
         "localhost:9092".to_string(),
+        "http://localhost:8081".to_string(),
         "books-created-consumer".to_string(),
         Topics::BookCreated.to_string(),
     );
