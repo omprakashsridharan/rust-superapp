@@ -1,6 +1,6 @@
 pub mod consumer;
 pub mod producer;
-
+pub mod shared;
 #[cfg(test)]
 mod tests {
 

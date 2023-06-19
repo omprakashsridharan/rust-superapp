@@ -1087,6 +1087,7 @@ name = "kafka"
 version = "0.0.0"
 dependencies = [
  "futures",
+ "opentelemetry",
  "rdkafka",
  "serde",
  "serde_json",

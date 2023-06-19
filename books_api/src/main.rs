@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(tracer)
         .init();
     let database_connection =
-        get_connection("postgres://postgres:postgres@localhost/rust-superapp").await?;
+        get_connection("postgres://postgres:postgres@localhost:5433/rust-superapp").await?;
     let repository = Repository::new(database_connection.clone())
         .await
         .expect("Error creating repository");

@@ -1,12 +1,19 @@
+use opentelemetry::{
+    global,
+    trace::{Span, Tracer},
+};
 use rdkafka::{
     config::RDKafkaLogLevel,
     consumer::{CommitMode, Consumer, StreamConsumer},
+    message::Headers,
     ClientConfig, Message,
 };
 use serde::Deserialize;
 use std::fmt::Debug;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::{error, info, warn};
+
+use crate::shared::HeaderExtractor;
 
 pub struct KafkaConsumer {
     consumer: StreamConsumer,
@@ -27,7 +34,10 @@ impl KafkaConsumer {
         Self { consumer, topic }
     }
 
-    pub async fn consume<T: Debug + for<'a> Deserialize<'a>>(&self, sender: UnboundedSender<T>) {
+    pub async fn consume<T: Clone + Debug + for<'a> Deserialize<'a>>(
+        &self,
+        sender: UnboundedSender<T>,
+    ) {
         self.consumer
             .subscribe(&[&self.topic])
             .expect("Can't subscribe to specific topics");
@@ -45,10 +55,27 @@ impl KafkaConsumer {
                                     message.offset(),
                                     message.timestamp()
                                 );
-                        if let Err(e) = sender.send(deserialized_payload) {
-                            error!("Error while sending via channel: {}", e);
-                        } else {
-                            info!("Message consumed successfully");
+                        if let Some(headers) = message.headers() {
+                            for header in headers.iter() {
+                                if let Some(val) = header.value {
+                                    info!(
+                                        "  Header {:#?}: {:?}",
+                                        header.key,
+                                        String::from_utf8(val.to_vec())
+                                    );
+                                }
+                            }
+                            let context = global::get_text_map_propagator(|propagator| {
+                                propagator.extract(&HeaderExtractor(&headers))
+                            });
+                            let mut span = global::tracer("consumer")
+                                .start_with_context("consume_payload", &context);
+                            if let Err(e) = sender.send(deserialized_payload) {
+                                error!("Error while sending via channel: {}", e);
+                            } else {
+                                info!("Message consumed successfully");
+                            }
+                            span.end();
                         }
                     } else {
                         warn!("Error while deserializing message payload");
