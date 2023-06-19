@@ -4,6 +4,7 @@ pub mod shared;
 #[cfg(test)]
 mod tests {
 
+    use apache_avro::AvroSchema;
     use rdkafka::mocking::MockCluster;
     use serde::{Deserialize, Serialize};
     use tokio::sync::mpsc;
@@ -20,10 +21,14 @@ mod tests {
         mock_cluster
             .create_topic(topic.clone(), 1, 1)
             .expect("Failed to create topic");
-        let kafka_producer =
-            KafkaProducer::new(mock_cluster.bootstrap_servers(), topic.to_string());
+        let kafka_producer = KafkaProducer::new(
+            mock_cluster.bootstrap_servers(),
+            "mock://".to_string(),
+            topic.to_string(),
+        );
         let kakfa_consumer = KafkaConsumer::new(
             mock_cluster.bootstrap_servers(),
+            "mock://".to_string(),
             "string-consumer".to_string(),
             topic.to_string(),
         );
@@ -44,7 +49,7 @@ mod tests {
         handle.abort()
     }
 
-    #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+    #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone, AvroSchema)]
     struct Custom {
         value: String,
     }
@@ -60,10 +65,14 @@ mod tests {
         mock_cluster
             .create_topic(topic.clone(), 1, 1)
             .expect("Failed to create topic");
-        let kafka_producer =
-            KafkaProducer::new(mock_cluster.bootstrap_servers(), topic.to_string());
+        let kafka_producer = KafkaProducer::new(
+            mock_cluster.bootstrap_servers(),
+            "mock://".to_string(),
+            topic.to_string(),
+        );
         let kakfa_consumer = KafkaConsumer::new(
             mock_cluster.bootstrap_servers(),
+            "mock://".to_string(),
             "custom-consumer".to_string(),
             topic.to_string(),
         );

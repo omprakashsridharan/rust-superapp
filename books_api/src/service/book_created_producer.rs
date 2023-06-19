@@ -17,9 +17,13 @@ pub enum BookCreatedProducerError {
 }
 
 impl BookCreatedProducer {
-    pub fn new(bootstrap_servers: String) -> Self {
+    pub fn new(bootstrap_servers: String, schema_registry_url: String) -> Self {
         Self {
-            producer: KafkaProducer::new(bootstrap_servers, Topics::BookCreated.to_string()),
+            producer: KafkaProducer::new(
+                bootstrap_servers,
+                schema_registry_url,
+                Topics::BookCreated.to_string(),
+            ),
         }
     }
 

@@ -15,3 +15,5 @@ futures = "0.3.28"
 serde_json = {workspace = true}
 tracing = {workspace = true}
 opentelemetry = {workspace = true}
+apache-avro = {workspace = true}
+schema_registry_converter = {workspace = true}

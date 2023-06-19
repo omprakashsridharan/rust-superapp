@@ -1,31 +1,73 @@
 use crate::shared;
+use apache_avro::AvroSchema;
 use opentelemetry::trace::{Span, TraceContextExt, Tracer};
 use opentelemetry::{global, Context, Key, KeyValue, StringValue};
-use rdkafka::message::{Header, OwnedHeaders, ToBytes};
+use rdkafka::message::{Header, OwnedHeaders};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::ClientConfig;
+use schema_registry_converter::async_impl::easy_avro::EasyAvroEncoder;
+use schema_registry_converter::async_impl::schema_registry::SrSettings;
+use schema_registry_converter::avro_common::get_supplied_schema;
+use schema_registry_converter::schema_registry_common::SubjectNameStrategy;
 use serde::Serialize;
+use std::sync::Arc;
 use std::time::Duration;
 use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct KafkaProducer {
     producer: FutureProducer,
+    avro_encoder: Arc<EasyAvroEncoder>,
     topic: String,
 }
 
 impl KafkaProducer {
-    pub fn new(bootstrap_servers: String, topic: String) -> Self {
+    pub fn new(bootstrap_servers: String, schema_registry_url: String, topic: String) -> Self {
         let producer: FutureProducer = ClientConfig::new()
             .set("bootstrap.servers", bootstrap_servers)
+            .set("produce.offset.report", "true")
             .set("message.timeout.ms", "5000")
+            .set("queue.buffering.max.messages", "10")
             .create()
             .expect("Producer creation error");
-        Self { producer, topic }
+        let sr_settings = SrSettings::new(schema_registry_url);
+        let avro_encoder = EasyAvroEncoder::new(sr_settings);
+        Self {
+            producer,
+            topic,
+            avro_encoder: Arc::new(avro_encoder),
+        }
     }
 
-    pub async fn produce(&self, key: impl ToBytes, payload: impl Serialize) -> bool {
-        let serialized_data = serde_json::to_vec(&payload).expect("Failed to serialize payload");
+    pub async fn produce<T: Serialize + AvroSchema>(&self, key: String, payload: T) -> bool {
+        let key_strategy = SubjectNameStrategy::TopicNameStrategyWithSchema(
+            self.topic.clone(),
+            true,
+            get_supplied_schema(&String::get_schema()),
+        );
+        let value_strategy = SubjectNameStrategy::TopicNameStrategyWithSchema(
+            self.topic.clone(),
+            true,
+            get_supplied_schema(&T::get_schema()),
+        );
+        let payload = match self
+            .avro_encoder
+            .clone()
+            .encode_struct(payload, &value_strategy)
+            .await
+        {
+            Ok(v) => v,
+            Err(e) => panic!("Error getting payload: {}", e),
+        };
+        let key = match self
+            .avro_encoder
+            .clone()
+            .encode_struct(key, &key_strategy)
+            .await
+        {
+            Ok(v) => v,
+            Err(e) => panic!("Error getting payload: {}", e),
+        };
         let mut span = global::tracer("producer").start("produce_to_kafka");
         span.set_attribute(KeyValue {
             key: Key::new("topic"),
@@ -47,7 +89,7 @@ impl KafkaProducer {
         });
 
         let record = FutureRecord::to(&self.topic)
-            .payload(&serialized_data)
+            .payload(&payload)
             .key(&key)
             .headers(headers);
 
