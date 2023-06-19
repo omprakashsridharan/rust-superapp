@@ -30,12 +30,12 @@ mod tests {
             .expect("Failed to create topic");
         let kafka_producer = KafkaProducer::new(
             mock_cluster.bootstrap_servers(),
-            "mock://".to_string(),
+            "http://localhost:8081".to_string(),
             topic.to_string(),
         );
         let kakfa_consumer = KafkaConsumer::new(
             mock_cluster.bootstrap_servers(),
-            "mock://".to_string(),
+            "http://localhost:8081".to_string(),
             "string-consumer".to_string(),
             topic.to_string(),
         );
@@ -74,12 +74,12 @@ mod tests {
             .expect("Failed to create topic");
         let kafka_producer = KafkaProducer::new(
             mock_cluster.bootstrap_servers(),
-            "mock://".to_string(),
+            "http://localhost:8081".to_string(),
             topic.to_string(),
         );
         let kakfa_consumer = KafkaConsumer::new(
             mock_cluster.bootstrap_servers(),
-            "mock://".to_string(),
+            "http://localhost:8081".to_string(),
             "custom-consumer".to_string(),
             topic.to_string(),
         );
