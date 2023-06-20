@@ -16,18 +16,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
+    - name: Cache Crates
+      uses: actions/cache@v3
       with:
-          toolchain: stable
-          override: true
-          target: x86_64-unknown-linux-musl
-    - name: Cache dependencies
-      uses: Swatinem/rust-cache@v2.2.1
-    - name: Run build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --target x86_64-unknown-linux-musl --release
+        path: |
+          ./target
+          ~/.cargo
+        key: debug-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          debug-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml') }}-
+          debug-${{ runner.os }}-
     - name: Run tests
       run: docker compose up -d && cargo test --verbose && docker compose down
