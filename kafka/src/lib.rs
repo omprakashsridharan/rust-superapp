@@ -1,50 +1,31 @@
 pub mod consumer;
 pub mod producer;
-pub mod schema_registry_image;
 pub mod shared;
 
 #[cfg(test)]
 mod tests {
 
     use apache_avro::AvroSchema;
-    use rdkafka::mocking::MockCluster;
     use serde::{Deserialize, Serialize};
-    use testcontainers::clients;
     use tokio::sync::mpsc;
 
     use crate::{
-        consumer::KafkaConsumer, producer::KafkaProducer, schema_registry_image::SchemaRegistry,
+        consumer::KafkaConsumer, producer::KafkaProducer,
     };
 
     #[tokio::test]
     async fn test_produce() {
-        let docker = clients::Cli::default();
         let topic = "string-topic";
         let key = "test-key";
         let payload = "test-payload";
 
-        let mock_cluster = MockCluster::new(1).unwrap();
-        mock_cluster
-            .create_topic(topic.clone(), 1, 1)
-            .expect("Failed to create topic");
-
-        let _schema_registry_node = docker.run(SchemaRegistry::new(
-            [(
-                "SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS".to_owned(),
-                mock_cluster
-                    .bootstrap_servers()
-                    .replace("127.0.0.1", "host.docker.internal"),
-            )]
-            .into(),
-        ));
-
         let kafka_producer = KafkaProducer::new(
-            mock_cluster.bootstrap_servers(),
+            "localhost:9092".to_string(),
             "http://localhost:8081".to_string(),
             topic.to_string(),
         );
         let kakfa_consumer = KafkaConsumer::new(
-            mock_cluster.bootstrap_servers(),
+            "localhost:9092".to_string(),
             "http://localhost:8081".to_string(),
             "string-consumer".to_string(),
             topic.to_string(),
@@ -78,17 +59,13 @@ mod tests {
         let payload = Custom {
             value: "test-payload".to_string(),
         };
-        let mock_cluster = MockCluster::new(1).unwrap();
-        mock_cluster
-            .create_topic(topic.clone(), 1, 1)
-            .expect("Failed to create topic");
         let kafka_producer = KafkaProducer::new(
-            mock_cluster.bootstrap_servers(),
+            "localhost:9092".to_string(),
             "http://localhost:8081".to_string(),
             topic.to_string(),
         );
         let kakfa_consumer = KafkaConsumer::new(
-            mock_cluster.bootstrap_servers(),
+            "localhost:9092".to_string(),
             "http://localhost:8081".to_string(),
             "custom-consumer".to_string(),
             topic.to_string(),
