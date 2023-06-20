@@ -22,7 +22,8 @@ jobs:
           toolchain: stable
           override: true
           target: x86_64-unknown-linux-musl
-
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2.2.1
     - name: Configure sccache env var and set build profile to ephemeral build
       run: |
           echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
