@@ -9,7 +9,7 @@ use apache_avro::AvroSchema;
 use common::events::dto::CreatedBook;
 use database::get_connection;
 use http_server::start_http_server;
-use kafka::shared::register_schema;
+use kafka::util::register_schema;
 use opentelemetry::global;
 use service::{book_created_producer::BookCreatedProducer, Service};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};

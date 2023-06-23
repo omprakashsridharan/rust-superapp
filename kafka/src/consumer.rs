@@ -17,7 +17,7 @@ use std::fmt::Debug;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::{error, info};
 
-use crate::shared::HeaderExtractor;
+use crate::util::HeaderExtractor;
 
 pub struct KafkaConsumer {
     consumer: StreamConsumer,

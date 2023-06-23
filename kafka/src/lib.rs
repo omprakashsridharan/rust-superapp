@@ -1,6 +1,6 @@
 pub mod consumer;
 pub mod producer;
-pub mod shared;
+pub mod util;
 
 #[cfg(test)]
 mod tests {
@@ -9,9 +9,7 @@ mod tests {
     use serde::{Deserialize, Serialize};
     use tokio::sync::mpsc;
 
-    use crate::{
-        consumer::KafkaConsumer, producer::KafkaProducer,
-    };
+    use crate::{consumer::KafkaConsumer, producer::KafkaProducer};
 
     #[tokio::test]
     async fn test_produce() {

@@ -1,4 +1,4 @@
-use crate::shared;
+use crate::util;
 use apache_avro::AvroSchema;
 use opentelemetry::trace::{Span, TraceContextExt, Tracer};
 use opentelemetry::{global, Context, Key, KeyValue, StringValue};
@@ -71,7 +71,7 @@ impl KafkaProducer {
             value: Some("value"),
         });
         global::get_text_map_propagator(|propagator| {
-            propagator.inject_context(&context, &mut shared::HeaderInjector(&mut headers))
+            propagator.inject_context(&context, &mut util::HeaderInjector(&mut headers))
         });
 
         let record = FutureRecord::to(&self.topic)
