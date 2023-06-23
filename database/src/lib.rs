@@ -6,10 +6,10 @@ pub async fn get_connection(database_url: &str) -> Result<DatabaseConnection, Db
     let mut opt = ConnectOptions::new(database_url.to_owned());
     opt.max_connections(100)
         .min_connections(5)
-        .connect_timeout(Duration::from_secs(8))
-        .acquire_timeout(Duration::from_secs(8))
-        .idle_timeout(Duration::from_secs(8))
-        .max_lifetime(Duration::from_secs(8))
+        .connect_timeout(Duration::from_secs(10))
+        .acquire_timeout(Duration::from_secs(10))
+        .idle_timeout(Duration::from_secs(10))
+        .max_lifetime(Duration::from_secs(10))
         .sqlx_logging(true)
         .sqlx_logging_level(log::LevelFilter::Info);
     return Database::connect(opt).await;
