@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 sea-orm = { workspace = true }
 tracing = { workspace = true }
+testcontainers = { workspace = true }
+tokio = { workspace = true }

@@ -657,6 +657,8 @@ name = "database"
 version = "0.0.0"
 dependencies = [
  "sea-orm",
+ "testcontainers",
+ "tokio",
  "tracing",
 ]
 
