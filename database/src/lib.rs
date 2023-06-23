@@ -22,7 +22,7 @@ mod tests {
     use testcontainers::{clients, images};
 
     #[tokio::test]
-    async fn test_create_book() {
+    async fn test_database_connection() {
         let docker = clients::Cli::default();
         let database = images::postgres::Postgres::default();
         let node = docker.run(database);
