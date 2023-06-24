@@ -491,7 +491,6 @@ version = "0.0.0"
 dependencies = [
  "apache-avro",
  "derive_builder",
- "schema_registry_converter",
  "serde",
  "strum",
 ]
