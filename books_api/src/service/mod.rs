@@ -6,15 +6,11 @@ use std::sync::Arc;
 use thiserror::Error;
 use tracing::{info_span, Instrument};
 
-trait Async: Send + Sync {}
-
 #[derive(Clone)]
 pub struct Service {
     repository: Repository,
     book_created_producer: Arc<BookCreatedProducer>,
 }
-
-impl Async for Service {}
 
 #[derive(Error, Debug)]
 pub enum ServiceError {
